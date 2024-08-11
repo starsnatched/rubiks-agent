@@ -10,6 +10,9 @@ import time
 NUM_QUBITS = 10
 NUM_LAYERS = 3
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
+
 dev = qml.device("default.qubit", wires=NUM_QUBITS)
 
 @qml.qnode(dev)
@@ -54,7 +57,7 @@ class HybridModel(nn.Module):
         return x
 
 def state_to_tensor(state: np.ndarray) -> torch.Tensor:
-    return torch.FloatTensor(state.flatten()).to(torch.float32)
+    return torch.FloatTensor(state.flatten()).to(device)
 
 def action_to_index(action: Action) -> int:
     return action.value
@@ -93,7 +96,7 @@ class RubiksSolver:
         
         self.optimizer.zero_grad()
         q_values = self.model(state_tensor)
-        loss = self.criterion(q_values[action_to_index(action)], torch.tensor(target, dtype=torch.float32))
+        loss = self.criterion(q_values[action_to_index(action)], torch.tensor(target, dtype=torch.float32).to(device))
         loss.backward()
         self.optimizer.step()
         
@@ -129,12 +132,12 @@ HIDDEN_SIZE = 64
 OUTPUT_SIZE = len(Action)
 LEARNING_RATE = 0.001
 
-model = HybridModel(INPUT_SIZE, HIDDEN_SIZE, OUTPUT_SIZE)
+model = HybridModel(INPUT_SIZE, HIDDEN_SIZE, OUTPUT_SIZE).to(device)
 optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 criterion = nn.MSELoss()
 
 for param in model.parameters():
-    param.data = param.data.to(torch.float32)
+    param.data = param.data.to(device)
 
 solver = RubiksSolver(model, optimizer, criterion)
 
