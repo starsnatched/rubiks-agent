@@ -102,7 +102,7 @@ class RubiksSolver:
         
         return action, loss.item()
     
-    def solve(self, initial_state: np.ndarray, max_steps: int = 1000, visualize: bool = False) -> List[Action]:
+    def solve(self, initial_state: np.ndarray, max_steps: int = 100, visualize: bool = False) -> List[Action]:
         state = initial_state
         actions = []
         
